@@ -198,7 +198,7 @@ module ActiveMerchant #:nodoc:
     	def commit(request_body, request_type = nil, unique_id = nil)
         request = build_request(request_body, request_type)
         headers = build_headers(request.size, unique_id)
-        
+        logger.debug("REQUEST HEADERS: #{headers.inspect}")
     	  response = parse(ssl_post(test? ? TEST_URL : LIVE_URL, request, headers))
 
     	  build_response(response[:result] == "0", response[:message], response,

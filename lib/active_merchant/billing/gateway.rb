@@ -70,6 +70,10 @@ module ActiveMerchant #:nodoc:
         super
         @@implementations << subclass
       end
+
+      initializer 'Rails logger' do
+        ActiveMerchant.logger = Rails.logger
+      end
     
       # The format of the amounts used by the gateway
       # :dollars => '12.50'

@@ -71,8 +71,6 @@ module ActiveMerchant #:nodoc:
         @@implementations << subclass
       end
 
-      self.logger = Rails.logger if Rails and Rails.logger      
-    
       # The format of the amounts used by the gateway
       # :dollars => '12.50'
       # :cents => '1250'

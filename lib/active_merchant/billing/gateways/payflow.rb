@@ -24,7 +24,7 @@ module ActiveMerchant #:nodoc:
         unique_id = nil
         unique_id = "#{amount(money)}#{credit_card_or_reference.dup_hash}" unless credit_card_or_reference.is_a?(String)
         unique_id = unique_id[0..31] unless unique_id.nil?
-        logger.debug("Payflow GUID: #{unique_id}")
+        Rails.logger.debug("Payflow GUID: #{unique_id}") if Rails and Rails.logger
         commit(request,nil,unique_id)
       end
       

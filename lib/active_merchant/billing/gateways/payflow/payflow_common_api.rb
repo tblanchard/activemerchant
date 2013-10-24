@@ -191,7 +191,7 @@ module ActiveMerchant #:nodoc:
       	  "X-VPS-Timeout" => timeout.to_s,
       	  "X-VPS-VIT-Integration-Product" => "ActiveMerchant",
       	  "X-VPS-VIT-Runtime-Version" => RUBY_VERSION,
-      	  "X-VPS-Request-ID" => (unique_id.nil? : Utils.generate_unique_id : unique_id)
+      	  "X-VPS-Request-ID" => (unique_id.nil? ? Utils.generate_unique_id : unique_id)
     	  }
     	end
     	

@@ -117,6 +117,11 @@ module ActiveMerchant #:nodoc:
       # See the documentation for the gateway you will be using to make sure there are no other 
       # required options.
       def initialize(options = {})
+        @logger = defined?(Rails) ? Rails.logger : Logger.new(STDOUT)
+      end
+
+      def logger
+        @logger
       end
                                      
       # Are we running in test mode?

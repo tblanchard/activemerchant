@@ -24,7 +24,7 @@ module ActiveMerchant #:nodoc:
         unique_id = nil
         unless credit_card_or_reference.is_a?(String)
           md5 = Digest::MD5.new
-          suffix = (Time.now.to_i + 3000)/3000 
+          suffix = (Time.now.to_i + 180)/180 
           md5.update("#{amount(money)}#{credit_card_or_reference.dup_hash}#{suffix}")
           unique_id = Base64.b64encode(md5.digest)[0..31]
           logger.debug("Payflow GUID: #{unique_id}")

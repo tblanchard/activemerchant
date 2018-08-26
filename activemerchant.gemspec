@@ -374,7 +374,7 @@ files:
 - script
 - test
 homepage: http://activemerchant.org/
-licenses: 
+licenses: "MIT"
 post_install_message: 
 rdoc_options: []
 

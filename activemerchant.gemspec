@@ -128,6 +128,7 @@ files:
 - lib/active_merchant/billing/gateways/paypal_ca.rb
 - lib/active_merchant/billing/gateways/paypal_express.rb
 - lib/active_merchant/billing/gateways/paypal_express_common.rb
+- lib/active_merchant/billing/gateways/paytrace.rb
 - lib/active_merchant/billing/gateways/plugnpay.rb
 - lib/active_merchant/billing/gateways/protx.rb
 - lib/active_merchant/billing/gateways/psigate.rb

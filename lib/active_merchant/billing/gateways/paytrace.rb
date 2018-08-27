@@ -24,9 +24,35 @@ module ActiveMerchant #:nodoc:
     # Information about ARB is available on the {Authorize.Net website}[http://www.authorize.net/solutions/merchantsolutions/merchantservices/automatedrecurringbilling/].
     # Information about the ARB API is available at the {Authorize.Net Integration Center}[http://developer.authorize.net/]
     class PayTraceGateway < Gateway
+      require 'rest-client'
+
+      BASE_URL = 'https://api.paytrace.com'
 
       # Creates a new PayTraceGateway
       #
+      def initialize(options = {})
+        requires!(options, :login, :password, :integrator_id)
+        @options = options
+        super
+      end
+
+
+      def auth_token
+        response = RestClient.post(BASE_URL + '/oauth/token', {
+          :grant_type => 'password',
+          :username => @options[:login],
+          :password => @options[:password]})
+
+        JSON.parse(response)                                  
+      end
+
+      def auth_failed?(token)
+        token['error'].present?
+      end
+
+      def auth_failed_response(token)
+        ActiveMerchant::Billing::Response.new(token['access_token'].present?,token['error_description'],token,token)      
+      end
 
       # Performs an authorization, which reserves the funds on the customer's credit card, but does not
       # charge the card.
@@ -63,26 +89,38 @@ module ActiveMerchant #:nodoc:
       # * *:custom_dba* -- optional value that is sent to the cardholder’s issuer and overrides the business name stored in PayTrace. Custom DBA values are only used with requests to process sales or authorizations through accounts on the TSYS/Vital, Heartland, and Trident networks (customer ID token sale)
       # * *:enable_partial_authentication* -- flag that must be set to ‘Y’ in order to support partial autho
       def authorize(money, creditcard, options = {})
-        billing_address = options[:billing_address]
+        token = auth_token
+        return auth_failed_response(token) if auth_failed?(token)
 
-        params = {
-          :amount => money/100.0,
-          :card_number => creditcard.number,
-          :exipration_month => creditcard.month,
-          :expiration_year => creditcard.year,
+        headers = {:Authorization => "Bearer #{token['access_token']}"}
+
+        body = {
+          :amount => money / 100.0,
+          :credit_card => { 
+            :number => creditcard.number,
+            :expiration_month => creditcard.month.to_i.to_s,
+            :expiration_year => (creditcard.year.to_i + 2000).to_s
+          },
+          :integrator_id => @options[:integrator_id],
           :csc => creditcard.verification_value,
-          :billing_name => billing_address[:name],
-          :billing_address => billing_address[:address1],
-          :billing_address2 => billing_address[:address2],
-          :billing_city => billing_address[:city],
-          :billing_state => billing_address[:state],
-          :billing_postal_code => billing_address[:zip],
-          :billing_country => billing_address[:country]
+          :billing_address => {
+            :name => billing_address[:name],
+            :street_address => billing_address[:address1],
+            :street_address2 => billing_address[:address2],
+            :city => billing_address[:city],
+            :state => billing_address[:state],
+            :zip => billing_address[:zip]
+          },
         }
 
-        response = PayTrace::Transaction.keyed_authorization(params)
+        response = RestClient.post(BASE_URL + '/v1/transactions/authorization/keyed', body, headers) {|response, request, result| response }
+        result = JSON.parse(response)
 
-        ActiveMerchant::Billing::Response.new(response.values['success'],response.values['status_message'],response.values,response.values)
+        ActiveMerchant::Billing::Response.new(result['success'],result['status_message'],result,
+          :authorization => result[:transaction_id],
+          :fraud_review => (result[:csc_response] != 'Match'),
+          :avs_result => result[:avs_response],
+          :cvv_result => result[:csc_response])
       end
 
       # Perform a purchase, which is essentially an authorization and capture in a single operation.
@@ -93,26 +131,41 @@ module ActiveMerchant #:nodoc:
       # * <tt>creditcard</tt> -- The CreditCard details for the transaction.
       # * <tt>options</tt> -- A hash of optional parameters.
       def purchase(money, creditcard, options = {})
+
+        token = auth_token
+        return auth_failed_response(token) if auth_failed?(token)
+        
+        headers = {:Authorization => "Bearer #{token['access_token']}"}
+
         billing_address = options[:billing_address]
 
-        params = {
-          :amount => money/100.0,
-          :card_number => creditcard.number,
-          :exipration_month => creditcard.month,
-          :expiration_year => creditcard.year,
+        body = {
+          :amount => money / 100.0,
+          :credit_card => { 
+            :number => creditcard.number,
+            :expiration_month => creditcard.month.to_i.to_s,
+            :expiration_year => (creditcard.year.to_i + 2000).to_s
+          },
+          :integrator_id => @options[:integrator_id],
           :csc => creditcard.verification_value,
-          :billing_name => billing_address[:name],
-          :billing_address => billing_address[:address1],
-          :billing_address2 => billing_address[:address2],
-          :billing_city => billing_address[:city],
-          :billing_state => billing_address[:state],
-          :billing_postal_code => billing_address[:zip],
-          :billing_country => billing_address[:country]
+          :billing_address => {
+            :name => billing_address[:name],
+            :street_address => billing_address[:address1],
+            :street_address2 => billing_address[:address2],
+            :city => billing_address[:city],
+            :state => billing_address[:state],
+            :zip => billing_address[:zip]
+          },
         }
 
-        response = PayTrace::Transaction.keyed_sale(params)
+        response = RestClient.post(BASE_URL + '/v1/transactions/sale/keyed', body, headers) {|response, request, result| response }
+        result = JSON.parse(response)
 
-        ActiveMerchant::Billing::Response.new(response.values['success'],response.values['status_message'],response.values,response.values)
+        ActiveMerchant::Billing::Response.new(result['success'],result['status_message'],result,
+          :authorization => result[:transaction_id],
+          :fraud_review => (result[:csc_response] != 'Match'),
+          :avs_result => result[:avs_response],
+          :cvv_result => result[:csc_response])
       end
 
       # Captures the funds from an authorized transaction.
@@ -123,11 +176,19 @@ module ActiveMerchant #:nodoc:
       # * <tt>authorization</tt> -- The authorization returned from the previous authorize request.
       def capture(money, authorization, options = {})
 
-        params = { 
-          :transaction_id => authorization,
-          :amount => money/100.0 }
-        response = PayTrace::Transaction.capture(params)
-        ActiveMerchant::Billing::Response.new(response.values['success'],response.values['status_message'],response.values,response.values)
+        token = auth_token
+        return auth_failed_response(token) if auth_failed?(token)
+        
+        headers = {:Authorization => "Bearer #{token['access_token']}"}
+
+        body = { :transaction_id => authorization }
+
+        response = RestClient.post(BASE_URL + '/v1/transactions/authorization/capture', body, headers) {|response, request, result| response }
+        result = JSON.parse(response)
+
+        ActiveMerchant::Billing::Response.new(result['success'],result['status_message'],result,
+          :authorization => result[:transaction_id])
+
       end
 
       # Void a previous transaction
@@ -136,9 +197,18 @@ module ActiveMerchant #:nodoc:
       #
       # * <tt>authorization</tt> - The authorization returned from the previous authorize request.
       def void(authorization, options = {})
-        response = PayTrace::Transaction.void({:transaction_id => authorization})
+        token = auth_token
+        return auth_failed_response(token) if auth_failed?(token)
+        
+        headers = {:Authorization => "Bearer #{token['access_token']}"}
 
-        ActiveMerchant::Billing::Response.new(response.values['success'],response.values['status_message'],response.values,response.values)
+        body = { :transaction_id => authorization }
+
+        response = RestClient.post(BASE_URL + '/v1/transactions/void', body, headers) {|response, request, result| response }
+        result = JSON.parse(response)
+
+        ActiveMerchant::Billing::Response.new(result['success'],result['status_message'],result,
+          :authorization => result[:transaction_id])
       end
 
       # Credit an account.
@@ -156,10 +226,18 @@ module ActiveMerchant #:nodoc:
       #
       # * <tt>:card_number</tt> -- The credit card number the credit is being issued to. (REQUIRED)
       def credit(money, identification, options = {})
-        params = {:amount => money/100.0, :transaction_id => identification }
-        response = PayTrace::Transaction.void(params)
-        ActiveMerchant::Billing::Response.new(response.values['success'],response.values['status_message'],response.values,response.values)
-      end
+        token = auth_token
+        return auth_failed_response(token) if auth_failed?(token)
+        
+        headers = { :Authorization => "Bearer #{token['access_token']}"}
+        body = { :amount => money/100.0, :transaction_id => identification }
 
+        response = RestClient.post(BASE_URL + '/v1/transactions/refund/for_transaction', body, headers) {|response, request, result| response }
+        result = JSON.parse(response)
+
+        ActiveMerchant::Billing::Response.new(result['success'],result['status_message'],result,
+          :authorization => result[:transaction_id])
+      end
+    end
   end
 end

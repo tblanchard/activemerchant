@@ -238,6 +238,19 @@ module ActiveMerchant #:nodoc:
         ActiveMerchant::Billing::Response.new(result['success'],result['status_message'],result,
           :authorization => result[:transaction_id])
       end
+
+      def settle
+        token = auth_token
+        return auth_failed_response(token) if auth_failed?(token)
+        
+        headers = { :Authorization => "Bearer #{token['access_token']}"}
+        body = {}
+
+        response = RestClient.post(BASE_URL + '/v1/transactions/settle', body, headers) {|response, request, result| response }
+        result = JSON.parse(response)
+
+        ActiveMerchant::Billing::Response.new(result['success'],result['status_message'],result,result)
+      end
     end
   end
 end

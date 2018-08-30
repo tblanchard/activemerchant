@@ -140,7 +140,7 @@ module ActiveMerchant #:nodoc:
         billing_address = options[:billing_address]
 
         body = {
-          :amount => money / 100.0,
+          :amount => (money.to_money/100.0).to_s,
           :credit_card => { 
             :number => creditcard.number,
             :expiration_month => creditcard.month.to_i.to_s,
@@ -181,7 +181,7 @@ module ActiveMerchant #:nodoc:
         
         headers = {:Authorization => "Bearer #{token['access_token']}"}
 
-        body = { :transaction_id => authorization }
+        body = { :amount => (money.to_money/100.0).to_s, :transaction_id => identification }
 
         response = RestClient.post(BASE_URL + '/v1/transactions/authorization/capture', body, headers) {|response, request, result| response }
         result = JSON.parse(response)
@@ -230,7 +230,7 @@ module ActiveMerchant #:nodoc:
         return auth_failed_response(token) if auth_failed?(token)
         
         headers = { :Authorization => "Bearer #{token['access_token']}"}
-        body = { :amount => money/100.0, :transaction_id => identification }
+        body = { :amount => (money.to_money/100.0).to_s, :transaction_id => identification }
 
         response = RestClient.post(BASE_URL + '/v1/transactions/refund/for_transaction', body, headers) {|response, request, result| response }
         result = JSON.parse(response)

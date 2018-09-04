@@ -117,10 +117,10 @@ module ActiveMerchant #:nodoc:
         result = JSON.parse(response)
 
         ActiveMerchant::Billing::Response.new(result['success'],result['status_message'],result,
-          :authorization => result[:transaction_id],
-          :fraud_review => (result[:csc_response] != 'Match'),
-          :avs_result => result[:avs_response],
-          :cvv_result => result[:csc_response])
+          :authorization => result['transaction_id'],
+          :fraud_review => (result['csc_response'] != 'Match'),
+          :avs_result => result['avs_response'],
+          :cvv_result => result['csc_response'])
       end
 
       # Perform a purchase, which is essentially an authorization and capture in a single operation.
@@ -162,10 +162,10 @@ module ActiveMerchant #:nodoc:
         result = JSON.parse(response)
 
         ActiveMerchant::Billing::Response.new(result['success'],result['status_message'],result,
-          :authorization => result[:transaction_id],
-          :fraud_review => (result[:csc_response] != 'Match'),
-          :avs_result => result[:avs_response],
-          :cvv_result => result[:csc_response])
+          :authorization => result['transaction_id'],
+          :fraud_review => (result['csc_response'] != 'Match'),
+          :avs_result => result['avs_response'],
+          :cvv_result => result['csc_response'])
       end
 
       # Captures the funds from an authorized transaction.
@@ -187,7 +187,7 @@ module ActiveMerchant #:nodoc:
         result = JSON.parse(response)
 
         ActiveMerchant::Billing::Response.new(result['success'],result['status_message'],result,
-          :authorization => result[:transaction_id])
+          :authorization => result['transaction_id'])
 
       end
 
@@ -208,7 +208,7 @@ module ActiveMerchant #:nodoc:
         result = JSON.parse(response)
 
         ActiveMerchant::Billing::Response.new(result['success'],result['status_message'],result,
-          :authorization => result[:transaction_id])
+          :authorization => result['transaction_id'])
       end
 
       # Credit an account.
@@ -236,7 +236,7 @@ module ActiveMerchant #:nodoc:
         result = JSON.parse(response)
 
         ActiveMerchant::Billing::Response.new(result['success'],result['status_message'],result,
-          :authorization => result[:transaction_id])
+          :authorization => result['transaction_id'])
       end
 
       def settle

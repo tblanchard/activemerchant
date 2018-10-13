@@ -94,6 +94,8 @@ module ActiveMerchant #:nodoc:
 
         headers = {:Authorization => "Bearer #{token['access_token']}"}
 
+        billing_address = options[:billing_address]
+
         body = {
           :amount => money / 100.0,
           :credit_card => { 
@@ -102,16 +104,19 @@ module ActiveMerchant #:nodoc:
             :expiration_year => (creditcard.year.to_i + 2000).to_s
           },
           :integrator_id => @options[:integrator_id],
-          :csc => creditcard.verification_value,
-          :billing_address => {
+          :csc => creditcard.verification_value
+        }
+
+        if billing_address.present?
+          body[:billing_address] = {
             :name => billing_address[:name],
             :street_address => billing_address[:address1],
             :street_address2 => billing_address[:address2],
             :city => billing_address[:city],
             :state => billing_address[:state],
             :zip => billing_address[:zip]
-          },
-        }
+          }
+        end
 
         response = RestClient.post(BASE_URL + '/v1/transactions/authorization/keyed', body, headers) {|response, request, result| response }
         result = JSON.parse(response)
@@ -147,16 +152,19 @@ module ActiveMerchant #:nodoc:
             :expiration_year => (creditcard.year.to_i + 2000).to_s
           },
           :integrator_id => @options[:integrator_id],
-          :csc => creditcard.verification_value,
-          :billing_address => {
+          :csc => creditcard.verification_value
+        }
+
+        if billing_address.present?
+          body[:billing_address] = {
             :name => billing_address[:name],
             :street_address => billing_address[:address1],
             :street_address2 => billing_address[:address2],
             :city => billing_address[:city],
             :state => billing_address[:state],
             :zip => billing_address[:zip]
-          },
-        }
+          }
+        end
 
         response = RestClient.post(BASE_URL + '/v1/transactions/sale/keyed', body, headers) {|response, request, result| response }
         result = JSON.parse(response)

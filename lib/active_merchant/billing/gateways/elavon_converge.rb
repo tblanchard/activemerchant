@@ -180,7 +180,7 @@ module ActiveMerchant #:nodoc:
           (doc.search(:ssl_result).text.to_i == 0),
           doc.search(:ssl_result_message).text, {},
           :authorization => doc.search(:ssl_txn_id).text,
-          :approval_code => doc.search(:ssl_approval_code).text,
+          :auth_code => doc.search(:ssl_approval_code).text,
           :avs_result => doc.search(:ssl_avs_response).text,
           :cvv_result => doc.search(:ssl_cvv2_response).text)
       end

@@ -126,7 +126,7 @@ module ActiveMerchant #:nodoc:
         return request_failed_response(doc) if request_failed?(doc)
 
         ActiveMerchant::Billing::Response.new(
-          doc.search(:ssl_result).text.to_i == 0,
+          doc.search(:ssl_result).text == '0',
           doc.search(:ssl_result_message).text, {},
           :authorization => doc.search(:ssl_txn_id).text,
           :auth_code => doc.search(:ssl_approval_code).text,
@@ -170,14 +170,14 @@ module ActiveMerchant #:nodoc:
         body_text = xmlize({:txn => body})
 
         response = RestClient.post(url, body_text) {|response, request, result| response }
-        logger.error body_text
-        logger.error response.to_s
+        #logger.error body_text
+        #logger.error response.to_s
         doc = ::Nokogiri::HTML(response)
 
         return request_failed_response(doc) if request_failed?(doc)
 
         ActiveMerchant::Billing::Response.new(
-          (doc.search(:ssl_result).text.to_i == 0),
+          doc.search(:ssl_result).text == '0',
           doc.search(:ssl_result_message).text, {},
           :authorization => doc.search(:ssl_txn_id).text,
           :auth_code => doc.search(:ssl_approval_code).text,
@@ -205,7 +205,7 @@ module ActiveMerchant #:nodoc:
         return request_failed_response(doc) if request_failed?(doc)
 
         ActiveMerchant::Billing::Response.new(
-          doc.search(:ssl_result).text.to_i == 0,
+          doc.search(:ssl_result).text == '0',
           doc.search(:ssl_result_message).text, {},
           :authorization => doc.search(:ssl_txn_id).text)
       end
@@ -227,7 +227,7 @@ module ActiveMerchant #:nodoc:
         return request_failed_response(doc) if request_failed?(doc)
 
         ActiveMerchant::Billing::Response.new(
-          doc.search(:ssl_result).text.to_i == 0,
+          doc.search(:ssl_result).text == '0',
           doc.search(:ssl_result_message).text, {},
           :authorization => doc.search(:ssl_txn_id).text)
       end
@@ -258,13 +258,13 @@ module ActiveMerchant #:nodoc:
         response = RestClient.post(url, body_text) {|response, request, result| response }
         doc = ::Nokogiri::HTML(response)
 
-        logger.error body_text
-        logger.error response.to_s
+        #logger.error body_text
+        #logger.error response.to_s
 
         return request_failed_response(doc) if request_failed?(doc)
 
         ActiveMerchant::Billing::Response.new(
-          doc.search(:ssl_result).text.to_i == 0,
+          doc.search(:ssl_result).text == '0',
           doc.search(:ssl_result_message).text, {},
           :authorization => doc.search(:ssl_txn_id).text)
       end

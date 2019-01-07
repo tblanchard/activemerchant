@@ -102,6 +102,7 @@ files:
 - lib/active_merchant/billing/gateways/cyber_source.rb
 - lib/active_merchant/billing/gateways/data_cash.rb
 - lib/active_merchant/billing/gateways/efsnet.rb
+- lib/active_merchant/billing/gateways/elavon_converge.rb
 - lib/active_merchant/billing/gateways/eway.rb
 - lib/active_merchant/billing/gateways/exact.rb
 - lib/active_merchant/billing/gateways/linkpoint.rb

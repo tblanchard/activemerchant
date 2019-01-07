@@ -25,6 +25,7 @@ module ActiveMerchant #:nodoc:
     # Information about the ARB API is available at the {Authorize.Net Integration Center}[http://developer.authorize.net/]
     class ElavonConvergeGateway < Gateway
       require 'rest-client'
+      require 'nokogiri'
 
       TEST_URL = 'https://demo.convergepay.com/VirtualMerchantDemo/processxml.do'
       LIVE_URL = 'https://api.convergepay.com/VirtualMerchant/processxml.do'
@@ -39,19 +40,24 @@ module ActiveMerchant #:nodoc:
       end
 
       def url
-        @options[:test] ? TEST_URL : LIVE_URL
+        #@options[:test] ? TEST_URL : LIVE_URL
+        LIVE_URL
       end
 
       def credentials
         @options.dup
       end
 
-      def auth_failed?(token)
-        token['error'].present?
+      def request_failed?(doc)
+        doc.search(:errorcode).present?
       end
 
-      def auth_failed_response(token)
-        ActiveMerchant::Billing::Response.new(token['access_token'].present?,token['error_description'],token,token)      
+      def request_failed_response(doc)
+        ActiveMerchant::Billing::Response.new(
+          false,
+          doc.search(:errormessage).text,
+          {},
+          @options)    
       end
 
       # Performs an authorization, which reserves the funds on the customer's credit card, but does not
@@ -95,7 +101,9 @@ module ActiveMerchant #:nodoc:
         body[:ssl_amount] = '%.2f' % (money / 100.0)
 
         body[:ssl_card_number] = creditcard.number
-        body[:ssl_exp_date] = ('%02d' % creditcard.month.to_i)+('%02d' % creditcard.year.to_i)
+        body[:ssl_exp_date] = ('%02d' % creditcard.month.to_i)+('%02d' % (creditcard.year.to_i % 1000))
+        body[:ssl_first_name] = creditcard.first_name
+        body[:ssl_last_name] = creditcard.last_name
 
         if creditcard.verification_value.present?
           body[:ssl_cvv2cvc2] = creditcard.verification_value
@@ -107,18 +115,23 @@ module ActiveMerchant #:nodoc:
         if billing_address.present?
           body[:ssl_avs_zip] = billing_address[:zip]
           body[:ssl_avs_address] = billing_address[:address1]
+          body[:ssl_city] = billing_address[:city]
+          body[:ssl_state] = billing_address[:state]
+          body[:ssl_country] = billing_address[:country]
         end
 
         response = RestClient.post(url, xmlize({:txn => body})) {|response, request, result| response }
-        doc = Nokogiri::HTML(response)
+        doc = ::Nokogiri::HTML(response)
+
+        return request_failed_response(doc) if request_failed?(doc)
 
         ActiveMerchant::Billing::Response.new(
-          doc.find(:ssl_result).text.to_i == 0,
-          doc.find(:ssl_result).text, {},
-          :authorization => doc.find(:ssl_txn_id).text,
-          :approval_code => doc.find(:ssl_approval_code).text,
-          :avs_result => doc.find(:ssl_avs_response).text,
-          :cvv_result => doc.find(:ssl_cvv2_response).text)
+          doc.search(:ssl_result).text.to_i == 0,
+          doc.search(:ssl_result_message).text, {},
+          :authorization => doc.search(:ssl_txn_id).text,
+          :approval_code => doc.search(:ssl_approval_code).text,
+          :avs_result => doc.search(:ssl_avs_response).text,
+          :cvv_result => doc.search(:ssl_cvv2_response).text)
       end
 
       # Perform a purchase, which is essentially an authorization and capture in a single operation.
@@ -135,7 +148,9 @@ module ActiveMerchant #:nodoc:
         body[:ssl_amount] = '%.2f' % (money / 100.0)
 
         body[:ssl_card_number] = creditcard.number
-        body[:ssl_exp_date] = ('%02d' % creditcard.month.to_i)+('%02d' % creditcard.year.to_i)
+        body[:ssl_exp_date] = ('%02d' % creditcard.month.to_i)+('%02d' % (creditcard.year.to_i % 1000))
+        body[:ssl_first_name] = creditcard.first_name
+        body[:ssl_last_name] = creditcard.last_name
 
         if creditcard.verification_value.present?
           body[:ssl_cvv2cvc2] = creditcard.verification_value
@@ -147,18 +162,27 @@ module ActiveMerchant #:nodoc:
         if billing_address.present?
           body[:ssl_avs_zip] = billing_address[:zip]
           body[:ssl_avs_address] = billing_address[:address1]
+          body[:ssl_city] = billing_address[:city]
+          body[:ssl_state] = billing_address[:state]
+          body[:ssl_country] = billing_address[:country]
         end
 
-        response = RestClient.post(url, xmlize({:txn => body})) {|response, request, result| response }
-        doc = Nokogiri::HTML(response)
+        body_text = xmlize({:txn => body})
+
+        response = RestClient.post(url, body_text) {|response, request, result| response }
+        logger.error body_text
+        logger.error response.to_s
+        doc = ::Nokogiri::HTML(response)
+
+        return request_failed_response(doc) if request_failed?(doc)
 
         ActiveMerchant::Billing::Response.new(
-          doc.find(:ssl_result).text.to_i == 0,
-          doc.find(:ssl_result).text, {},
-          :authorization => doc.find(:ssl_txn_id).text,
-          :approval_code => doc.find(:ssl_approval_code).text,
-          :avs_result => doc.find(:ssl_avs_response).text,
-          :cvv_result => doc.find(:ssl_cvv2_response).text)
+          (doc.search(:ssl_result).text.to_i == 0),
+          doc.search(:ssl_result_message).text, {},
+          :authorization => doc.search(:ssl_txn_id).text,
+          :approval_code => doc.search(:ssl_approval_code).text,
+          :avs_result => doc.search(:ssl_avs_response).text,
+          :cvv_result => doc.search(:ssl_cvv2_response).text)
       end
 
       # Captures the funds from an authorized transaction.
@@ -176,12 +200,14 @@ module ActiveMerchant #:nodoc:
         body[:ssl_txn_id] = authorization
 
         response = RestClient.post(url, xmlize({:txn => body})) {|response, request, result| response }
-        doc = Nokogiri::HTML(response)
+        doc = ::Nokogiri::HTML(response)
+
+        return request_failed_response(doc) if request_failed?(doc)
 
         ActiveMerchant::Billing::Response.new(
-          doc.find(:ssl_result).text.to_i == 0,
-          doc.find(:ssl_result).text, {},
-          :authorization => doc.find(:ssl_txn_id).text)
+          doc.search(:ssl_result).text.to_i == 0,
+          doc.search(:ssl_result_message).text, {},
+          :authorization => doc.search(:ssl_txn_id).text)
       end
 
       # Void a previous transaction
@@ -196,12 +222,14 @@ module ActiveMerchant #:nodoc:
         body[:ssl_txn_id] = authorization
 
         response = RestClient.post(url, xmlize({:txn => body})) {|response, request, result| response }
-        doc = Nokogiri::HTML(response)
+        doc = ::Nokogiri::HTML(response)
+
+        return request_failed_response(doc) if request_failed?(doc)
 
         ActiveMerchant::Billing::Response.new(
-          doc.find(:ssl_result).text.to_i == 0,
-          doc.find(:ssl_result).text, {},
-          :authorization => doc.find(:ssl_txn_id).text)
+          doc.search(:ssl_result).text.to_i == 0,
+          doc.search(:ssl_result_message).text, {},
+          :authorization => doc.search(:ssl_txn_id).text)
       end
 
       # Credit an account.
@@ -226,12 +254,14 @@ module ActiveMerchant #:nodoc:
         body[:ssl_txn_id] = authorization
 
         response = RestClient.post(url, xmlize({:txn => body})) {|response, request, result| response }
-        doc = Nokogiri::HTML(response)
+        doc = ::Nokogiri::HTML(response)
+
+        return request_failed_response(doc) if request_failed?(doc)
 
         ActiveMerchant::Billing::Response.new(
-          doc.find(:ssl_result).text.to_i == 0,
-          doc.find(:ssl_result).text, {},
-          :authorization => doc.find(:ssl_txn_id).text)
+          doc.search(:ssl_result).text.to_i == 0,
+          doc.search(:ssl_result_message).text, {},
+          :authorization => doc.search(:ssl_txn_id).text)
       end
 
       def settle
@@ -245,7 +275,6 @@ module ActiveMerchant #:nodoc:
         end
         args.to_s
       end
-
     end
   end
 end

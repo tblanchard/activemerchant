@@ -251,7 +251,7 @@ module ActiveMerchant #:nodoc:
         body[:ssl_transaction_type] = :cccredit
 
         body[:ssl_amount] = (money.to_money/100.0).to_s
-        body[:ssl_txn_id] = authorization
+        body[:ssl_txn_id] = identification
 
         response = RestClient.post(url, xmlize({:txn => body})) {|response, request, result| response }
         doc = ::Nokogiri::HTML(response)

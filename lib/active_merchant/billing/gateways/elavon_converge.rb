@@ -248,7 +248,7 @@ module ActiveMerchant #:nodoc:
       # * <tt>:card_number</tt> -- The credit card number the credit is being issued to. (REQUIRED)
       def credit(money, identification, options = {})
         body = credentials
-        body[:ssl_transaction_type] = :cccredit
+        body[:ssl_transaction_type] = :ccreturn
 
         body[:ssl_amount] = (money.to_money/100.0).to_s
         body[:ssl_txn_id] = identification

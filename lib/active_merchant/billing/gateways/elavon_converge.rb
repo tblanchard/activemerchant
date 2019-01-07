@@ -129,7 +129,7 @@ module ActiveMerchant #:nodoc:
           doc.search(:ssl_result).text.to_i == 0,
           doc.search(:ssl_result_message).text, {},
           :authorization => doc.search(:ssl_txn_id).text,
-          :approval_code => doc.search(:ssl_approval_code).text,
+          :auth_code => doc.search(:ssl_approval_code).text,
           :avs_result => doc.search(:ssl_avs_response).text,
           :cvv_result => doc.search(:ssl_cvv2_response).text)
       end
@@ -253,8 +253,13 @@ module ActiveMerchant #:nodoc:
         body[:ssl_amount] = (money.to_money/100.0).to_s
         body[:ssl_txn_id] = identification
 
-        response = RestClient.post(url, xmlize({:txn => body})) {|response, request, result| response }
+        body_text = xmlize({:txn => body})
+
+        response = RestClient.post(url, body_text) {|response, request, result| response }
         doc = ::Nokogiri::HTML(response)
+
+        logger.error body_text
+        logger.error response.to_s
 
         return request_failed_response(doc) if request_failed?(doc)
 

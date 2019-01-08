@@ -53,6 +53,9 @@ module ActiveMerchant #:nodoc:
       # run validation on the passed in value if it is supplied
       attr_accessor :verification_value
 
+      # Card Swipe Track Data
+      attr_accessor :track_data
+
       # Provides proxy access to an expiry date object
       def expiry_date
         ExpiryDate.new(@month, @year)

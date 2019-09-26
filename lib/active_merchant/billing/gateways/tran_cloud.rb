@@ -85,7 +85,7 @@ module ActiveMerchant #:nodoc:
         trs[:CardType] = 'Credit'
         trs[:Account] = @options[:Account] if @options[:Account].present?
 
-        logger.debug 'REQUEST: ' + JSON.pretty_generate(transRequest)
+        logger.info 'REQUEST: ' + JSON.pretty_generate(transRequest)
         response = RestClient::Request.execute(
           :method => :post, 
           :url => url, 
@@ -95,7 +95,7 @@ module ActiveMerchant #:nodoc:
 
         #values = response[:RStream].reject { |k,v| (k.to_s =~ /Line/) === 0 }
         values = response[:RStream]
-        logger.debug 'RESPONSE: ' + JSON.pretty_generate(response)
+        logger.info 'RESPONSE: ' + JSON.pretty_generate(response)
         return request_failed_response(values) if request_failed?(values)
         
         card_holder_name = {:name_first => '', :name_last => ''}
@@ -174,7 +174,7 @@ module ActiveMerchant #:nodoc:
         trs.delete(:PinPadIpAddress) if @options[:RecordNo].present?
         trs.delete(:Duplicate)
 
-        logger.debug 'REQUEST: ' + JSON.pretty_generate(transRequest)
+        logger.info 'REQUEST: ' + JSON.pretty_generate(transRequest)
 
         response = RestClient::Request.execute(
           :method => :post, 
@@ -184,7 +184,7 @@ module ActiveMerchant #:nodoc:
           :timeout => 120) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
 
         values = response[:RStream].reject { |k,v| k.to_s[0..3] == 'Line' }
-        logger.debug 'RESPONSE: ' + JSON.pretty_generate(response)
+        logger.info 'RESPONSE: ' + JSON.pretty_generate(response)
 
         return request_failed_response(values) if request_failed?(values)
 
@@ -254,7 +254,7 @@ module ActiveMerchant #:nodoc:
         trs[:ProcessData] ||= @options[:ProcessData] if @options[:ProcessData].present?
         trs.delete(:Duplicate)
 
-        logger.debug 'REQUEST: ' + JSON.pretty_generate(transRequest)
+        logger.info 'REQUEST: ' + JSON.pretty_generate(transRequest)
         response = RestClient::Request.execute(
           :method => :post, 
           :url => url, 
@@ -263,7 +263,7 @@ module ActiveMerchant #:nodoc:
           :timeout => 120) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
         
         values = response[:RStream].reject { |k,v| k.to_s[0..3] == 'Line' }
-        logger.debug 'RESPONSE: ' + JSON.pretty_generate(response)
+        logger.info 'RESPONSE: ' + JSON.pretty_generate(response)
 
         return request_failed_response(values) if request_failed?(values)
 
@@ -286,14 +286,14 @@ module ActiveMerchant #:nodoc:
       def reset
         transRequest = basic_request(:EMVPadReset)
         trs = transRequest[:TStream][:Transaction]
-        logger.debug 'REQUEST: ' + transRequest.to_json
+        logger.info 'REQUEST: ' + transRequest.to_json
         response = RestClient::Request.execute(
           :method => :post, 
           :url => url, 
           :headers => headers, 
           :payload => transRequest.to_json, 
           :timeout => 120) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
-        logger.debug 'RESPONSE: ' + response.to_json
+        logger.info 'RESPONSE: ' + response.to_json
         
         values = response[:RStream].reject { |k,v| (k.to_s =~ /Line/) === 0 }
         return request_failed_response(values) if request_failed?(values)
@@ -307,14 +307,14 @@ module ActiveMerchant #:nodoc:
 
       def emv_param_download
         transRequest = basic_request(:EMVParamDownload, :Admin)
-        logger.debug 'REQUEST: ' + transRequest.to_json
+        logger.info 'REQUEST: ' + transRequest.to_json
         response = RestClient::Request.execute(
           :method => :post, 
           :url => url, 
           :headers => headers, 
           :payload => transRequest.to_json, 
           :timeout => 120) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
-        logger.debug 'RESPONSE: ' + response.to_json
+        logger.info 'RESPONSE: ' + response.to_json
 
         values = response[:RStream].reject { |k,v| (k.to_s =~ /Line/) === 0 }
         return request_failed_response(values) if request_failed?(values)
@@ -330,7 +330,7 @@ module ActiveMerchant #:nodoc:
       def basic_request(tran_code, request_type = :Transaction)
         transRequest = { :TStream => { request_type => {} } }
         trs = transRequest[:TStream][request_type]
-        logger.debug @options.to_json
+        logger.info @options.to_json
         trs[:MerchantID] = @options[:merchant_id]
         trs[:OperatorID] = @options[:operator_id]
         trs[:TranDeviceID] = @options[:trancloud_device_id]
@@ -350,14 +350,14 @@ module ActiveMerchant #:nodoc:
       def cancel()
         transRequest = basic_request(:TransactionCancel, :Admin)
         trs = transRequest[:TStream][:Admin]
-        logger.debug 'REQUEST: ' + transRequest.to_json
+        logger.info 'REQUEST: ' + transRequest.to_json
         response = RestClient::Request.execute(
           :method => :post, 
           :url => url, 
           :headers => headers, 
           :payload => transRequest.to_json, 
           :timeout => 120) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
-        logger.debug 'RESPONSE: ' + response.to_json
+        logger.info 'RESPONSE: ' + response.to_json
         
         values = response[:RStream].reject { |k,v| (k.to_s =~ /Line/) === 0 }
         return request_failed_response(values) if request_failed?(values)
@@ -372,14 +372,14 @@ module ActiveMerchant #:nodoc:
         transRequest = basic_request(:BatchSummary, :Admin)
         trs = transRequest[:TStream][:Admin]
         trs[:TranType] = 'Administrative'
-        logger.debug 'REQUEST: ' + transRequest.to_json
+        logger.info 'REQUEST: ' + transRequest.to_json
         response = RestClient::Request.execute(
           :method => :post, 
           :url => url, 
           :headers => headers, 
           :payload => transRequest.to_json, 
           :timeout => 120) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
-        logger.debug 'RESPONSE: ' + response.to_json
+        logger.info 'RESPONSE: ' + response.to_json
         
         values = response[:RStream].reject { |k,v| (k.to_s =~ /Line/) === 0 }
         return request_failed_response(values) if request_failed?(values)

@@ -146,6 +146,7 @@ files:
 - lib/active_merchant/billing/gateways/secure_pay_tech.rb
 - lib/active_merchant/billing/gateways/skip_jack.rb
 - lib/active_merchant/billing/gateways/trans_first.rb
+- lib/active_merchant/billing/gateways/tran_cloud.rb
 - lib/active_merchant/billing/gateways/trust_commerce.rb
 - lib/active_merchant/billing/gateways/usa_epay.rb
 - lib/active_merchant/billing/gateways/verifi.rb

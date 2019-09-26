@@ -5,7 +5,7 @@ module ActiveMerchant #:nodoc:
     end
   
     class Response
-      attr_reader :params, :message, :test, :authorization, :avs_result, :cvv_result
+      attr_reader :params, :message, :test, :authorization, :avs_result, :cvv_result, :options
       
       def success?
         @success
@@ -20,7 +20,7 @@ module ActiveMerchant #:nodoc:
       end
       
       def initialize(success, message, params = {}, options = {})
-        @success, @message, @params = success, message, params.stringify_keys
+        @success, @message, @params, @options = success, message, params.stringify_keys, options
         @test = options[:test] || false        
         @authorization = options[:authorization]
         @fraud_review = options[:fraud_review]

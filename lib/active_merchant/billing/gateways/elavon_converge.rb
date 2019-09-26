@@ -45,17 +45,17 @@ module ActiveMerchant #:nodoc:
       end
 
       def credentials
-        @options.dup
+        @options.reject {|k,v| k.to_s[0..3] != 'ssl_' }
       end
 
       def request_failed?(doc)
-        doc.search(:errorcode).present?
+        doc[:errorCode].present?
       end
 
       def request_failed_response(doc)
         ActiveMerchant::Billing::Response.new(
           false,
-          doc.search(:errormessage).text,
+          doc[:errorMessage],
           {},
           @options)    
       end
@@ -120,18 +120,37 @@ module ActiveMerchant #:nodoc:
           body[:ssl_country] = billing_address[:country]
         end
 
+        body_text = xmlize({:txn => body})
+
+        # for logging
+        safe_request = xmlize({:txn => sanitize_body(body)})
+
+        logger.debug 'REQUEST: ' + safe_request
+
         response = RestClient.post(url, xmlize({:txn => body})) {|response, request, result| response }
-        doc = ::Nokogiri::HTML(response)
+
+        logger.debug 'RESPONSE: ' + response
+
+        doc = JSON.parse(Hash.from_xml(response).to_json,:symbolize_names=>true)[:txn]
 
         return request_failed_response(doc) if request_failed?(doc)
 
         ActiveMerchant::Billing::Response.new(
-          doc.search(:ssl_result).text == '0',
-          doc.search(:ssl_result_message).text, {},
-          :authorization => doc.search(:ssl_txn_id).text,
-          :auth_code => doc.search(:ssl_approval_code).text,
-          :avs_result => doc.search(:ssl_avs_response).text,
-          :cvv_result => doc.search(:ssl_cvv2_response).text)
+          doc[:ssl_result] == '0',
+          doc[:ssl_result_message], {},
+          :authorization => doc[:ssl_txn_id],
+          :auth_code => doc[:ssl_approval_code],
+          :avs_result => doc[:ssl_avs_response],
+          :cvv_result => doc[:ssl_cvv2_response],
+          :request => safe_request,
+          :response => doc.to_json)
+      end
+
+      def sanitize_body(body)
+        body = body.dup
+        body[:ssl_card_number] = body[:ssl_card_number].gsub(/.(?=.{4})/,'X') if body[:ssl_card_number].present?
+        body.delete(:ssl_cvv2cvc2)
+        body
       end
 
       # Perform a purchase, which is essentially an authorization and capture in a single operation.
@@ -169,20 +188,27 @@ module ActiveMerchant #:nodoc:
 
         body_text = xmlize({:txn => body})
 
+        # for logging
+        safe_request = xmlize({:txn => sanitize_body(body)})
+        logger.debug 'REQUEST: ' + safe_request
+
         response = RestClient.post(url, body_text) {|response, request, result| response }
-        #logger.error body_text
-        #logger.error response.to_s
-        doc = ::Nokogiri::HTML(response)
+        
+        logger.debug 'RESPONSE: ' + response
+        doc = JSON.parse(Hash.from_xml(response).to_json,:symbolize_names=>true)[:txn]
 
         return request_failed_response(doc) if request_failed?(doc)
 
         ActiveMerchant::Billing::Response.new(
-          doc.search(:ssl_result).text == '0',
-          doc.search(:ssl_result_message).text, {},
-          :authorization => doc.search(:ssl_txn_id).text,
-          :auth_code => doc.search(:ssl_approval_code).text,
-          :avs_result => doc.search(:ssl_avs_response).text,
-          :cvv_result => doc.search(:ssl_cvv2_response).text)
+          doc[:ssl_result] == '0',
+          doc[:ssl_result_message], {},
+          :authorization => doc[:ssl_txn_id],
+          :auth_code => doc[:ssl_approval_code],
+          :avs_result => doc[:ssl_avs_response],
+          :cvv_result => doc[:ssl_cvv2_response],
+          :request => safe_request,
+          :response => doc.to_json
+          )
       end
 
       # Captures the funds from an authorized transaction.
@@ -199,15 +225,25 @@ module ActiveMerchant #:nodoc:
         body[:ssl_amount] = (money.to_money/100.0).to_s
         body[:ssl_txn_id] = authorization
 
-        response = RestClient.post(url, xmlize({:txn => body})) {|response, request, result| response }
-        doc = ::Nokogiri::HTML(response)
+        body_text = xmlize({:txn => body})
+
+        # for logging
+        logger.debug 'REQUEST: ' + body_text
+
+        response = RestClient.post(url, body_text) {|response, request, result| response }
+        logger.debug 'RESPONSE: ' + response
+
+
+        doc = JSON.parse(Hash.from_xml(response).to_json,:symbolize_names=>true)[:txn]
 
         return request_failed_response(doc) if request_failed?(doc)
 
         ActiveMerchant::Billing::Response.new(
-          doc.search(:ssl_result).text == '0',
-          doc.search(:ssl_result_message).text, {},
-          :authorization => doc.search(:ssl_txn_id).text)
+          doc[:ssl_result] == '0',
+          doc[:ssl_result_message], {},
+          :authorization => doc[:ssl_txn_id],
+          :request => body_text,
+          :response => doc.to_json)
       end
 
       # Void a previous transaction
@@ -221,15 +257,24 @@ module ActiveMerchant #:nodoc:
 
         body[:ssl_txn_id] = authorization
 
-        response = RestClient.post(url, xmlize({:txn => body})) {|response, request, result| response }
-        doc = ::Nokogiri::HTML(response)
+        body_text = xmlize({:txn => body})
+
+        # for logging
+        logger.debug 'REQUEST: ' + body_text
+
+        response = RestClient.post(url, body_text) {|response, request, result| response }
+        logger.debug 'RESPONSE: ' + response
+
+        doc = JSON.parse(Hash.from_xml(response).to_json,:symbolize_names=>true)[:txn]
 
         return request_failed_response(doc) if request_failed?(doc)
 
         ActiveMerchant::Billing::Response.new(
-          doc.search(:ssl_result).text == '0',
-          doc.search(:ssl_result_message).text, {},
-          :authorization => doc.search(:ssl_txn_id).text)
+          doc[:ssl_result].to_s == '0',
+          doc[:ssl_result_message], {},
+          :authorization => doc[:ssl_txn_id],
+          :request => body_text,
+          :response => doc.to_json)
       end
 
       # Credit an account.
@@ -255,8 +300,11 @@ module ActiveMerchant #:nodoc:
 
         body_text = xmlize({:txn => body})
 
+        logger.debug 'REQUEST: ' + body_text
         response = RestClient.post(url, body_text) {|response, request, result| response }
-        doc = ::Nokogiri::HTML(response)
+        logger.debug 'RESPONSE: ' + response
+
+        doc = JSON.parse(Hash.from_xml(response).to_json,:symbolize_names=>true)[:txn]
 
         #logger.error body_text
         #logger.error response.to_s
@@ -264,9 +312,11 @@ module ActiveMerchant #:nodoc:
         return request_failed_response(doc) if request_failed?(doc)
 
         ActiveMerchant::Billing::Response.new(
-          doc.search(:ssl_result).text == '0',
-          doc.search(:ssl_result_message).text, {},
-          :authorization => doc.search(:ssl_txn_id).text)
+          doc[:ssl_result].to_s == '0',
+          doc[:ssl_result_message], {},
+          :authorization => doc[:ssl_txn_id],
+          :request => body_text,
+          :response => doc.to_json)
       end
 
       def settle

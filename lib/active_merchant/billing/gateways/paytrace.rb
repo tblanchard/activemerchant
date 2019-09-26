@@ -123,6 +123,7 @@ module ActiveMerchant #:nodoc:
 
         ActiveMerchant::Billing::Response.new(result['success'],result['status_message'],result,
           :authorization => result['transaction_id'],
+          :auth_code => result['approval_code'],
           :fraud_review => (result['csc_response'] != 'Match'),
           :avs_result => result['avs_response'],
           :cvv_result => result['csc_response'])
@@ -171,6 +172,7 @@ module ActiveMerchant #:nodoc:
 
         ActiveMerchant::Billing::Response.new(result['success'],result['status_message'],result,
           :authorization => result['transaction_id'],
+          :auth_code => result['approval_code'],
           :fraud_review => (result['csc_response'] != 'Match'),
           :avs_result => result['avs_response'],
           :cvv_result => result['csc_response'])

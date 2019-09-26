@@ -83,6 +83,7 @@ module ActiveMerchant #:nodoc:
         trs[:InvoiceNo] = @options[:invoice_no]
         trs[:RefNo] = @options[:invoice_no]
         trs[:CardType] = 'Credit'
+        trs[:Account] = @options[:Account] if @options[:Account].present?
 
         logger.debug 'REQUEST: ' + JSON.pretty_generate(transRequest)
         response = RestClient::Request.execute(
@@ -97,15 +98,18 @@ module ActiveMerchant #:nodoc:
         logger.debug 'RESPONSE: ' + JSON.pretty_generate(response)
         return request_failed_response(values) if request_failed?(values)
         
-        pair = values[:CardholderName].split('/')
         card_holder_name = {:name_first => '', :name_last => ''}
-        if pair.size == 2
-           card_holder_name = {:name_first => pair[1].split('.').first.strip, :name_last => pair[0].strip}
-        else
-          pair = values[:CardholderName].split(' ')
-          card_holder_name = { :name_first => pair.first.strip, :name_last => pair.last.strip }
-        end  
 
+        if values[:CardholderName].present?
+          pair = values[:CardholderName].split('/')
+          
+          if pair.size == 2
+             card_holder_name = {:name_first => pair[1].split('.').first.strip, :name_last => pair[0].strip}
+          else
+            pair = values[:CardholderName].split(' ')
+            card_holder_name = { :name_first => pair.first.strip, :name_last => pair.last.strip }
+          end  
+        end
           values[:authorization] = values[:RecordNo]
           values[:auth_code] = values[:AuthCode]
 
@@ -232,21 +236,22 @@ module ActiveMerchant #:nodoc:
         transRequest = @options[:RecordNo].present? ? basic_request(:ReturnByRecordNo) : basic_request(:EMVReturn)
         trs = transRequest[:TStream][:Transaction]
 
-        trs[:RecordNo] = @options[:RecordNo] if @options[:RecordNo].present?
-        trs[:Amount] = {:Purchase => ('%.2f' % (money / 100.0))}
-
-        trs[:Account] = @options[:Account] if @options[:Account].present? && !@options[:RecordNo].present?
-        trs[:TranType] = 'Credit' if @options[:RecordNo].present?
+        if @options[:RecordNo].present?
+          trs[:RecordNo] = @options[:RecordNo]
+          trs[:Frequency] = 'Recurring'
+          trs[:TranType] = 'Credit'
+          trs.delete(:PinPadIpAddress)
+        else
+          trs[:Account] = @options[:Account] if @options[:Account].present?
+        end
         trs[:Amount] = {:Purchase => ('%.2f' % (money / 100.0))}
         trs[:InvoiceNo] = options[:InvoiceNo] || @options[:InvoiceNo]
         trs[:RefNo] = options[:RefNo] || @options[:RefNo] || trs[:InvoiceNo]
         trs[:AuthCode] = @options[:AuthCode]
         trs[:AcqRefData] = options[:AcqRefData] || @options[:AcqRefData]
         trs[:OKAmount] = 'Disallow'
-        if options[:ProcessData].present? || @options[:ProcessData].present?
-          trs[:ProcessData] = options[:ProcessData] || @options[:ProcessData]
-        end
-        trs.delete(:PinPadIpAddress) if @options[:RecordNo].present?
+        trs[:ProcessData] = options[:ProcessData] if options[:ProcessData].present?
+        trs[:ProcessData] ||= @options[:ProcessData] if @options[:ProcessData].present?
         trs.delete(:Duplicate)
 
         logger.debug 'REQUEST: ' + JSON.pretty_generate(transRequest)

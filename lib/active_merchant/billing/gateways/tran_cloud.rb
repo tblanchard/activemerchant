@@ -101,12 +101,12 @@ module ActiveMerchant #:nodoc:
         card_holder_name = {:name_first => '', :name_last => ''}
 
         if values[:CardholderName].present?
-          pair = values[:CardholderName].split('/')
+          pair = values[:CardholderName].split('/').collect{|s| s.strip }.reject{|s| s.empty? }
           
           if pair.size == 2
              card_holder_name = {:name_first => pair[1].split('.').first.strip, :name_last => pair[0].strip}
           else
-            pair = values[:CardholderName].split(' ')
+            pair = pair.first.split(' ')
             card_holder_name = { :name_first => pair.first.strip, :name_last => pair.last.strip }
           end  
         end

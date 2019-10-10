@@ -105,7 +105,7 @@ module ActiveMerchant #:nodoc:
           
           if pair.size == 2
              card_holder_name = {:name_first => pair[1].split('.').first.strip, :name_last => pair[0].strip}
-          else
+          elsif pair.size > 1
             pair = pair.first.split(' ')
             card_holder_name = { :name_first => pair.first.strip, :name_last => pair.last.strip }
           end  

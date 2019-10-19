@@ -125,11 +125,11 @@ module ActiveMerchant #:nodoc:
         # for logging
         safe_request = xmlize({:txn => sanitize_body(body)})
 
-        logger.debug 'REQUEST: ' + safe_request
+        logger.error 'REQUEST: ' + safe_request
 
         response = RestClient.post(url, xmlize({:txn => body})) {|response, request, result| response }
 
-        logger.debug 'RESPONSE: ' + response
+        logger.error 'RESPONSE: ' + response
 
         doc = JSON.parse(Hash.from_xml(response).to_json,:symbolize_names=>true)[:txn]
 
@@ -190,11 +190,11 @@ module ActiveMerchant #:nodoc:
 
         # for logging
         safe_request = xmlize({:txn => sanitize_body(body)})
-        logger.debug 'REQUEST: ' + safe_request
+        logger.error 'REQUEST: ' + safe_request
 
         response = RestClient.post(url, body_text) {|response, request, result| response }
         
-        logger.debug 'RESPONSE: ' + response
+        logger.error 'RESPONSE: ' + response
         doc = JSON.parse(Hash.from_xml(response).to_json,:symbolize_names=>true)[:txn]
 
         return request_failed_response(doc) if request_failed?(doc)
@@ -228,10 +228,10 @@ module ActiveMerchant #:nodoc:
         body_text = xmlize({:txn => body})
 
         # for logging
-        logger.debug 'REQUEST: ' + body_text
+        logger.error 'REQUEST: ' + body_text
 
         response = RestClient.post(url, body_text) {|response, request, result| response }
-        logger.debug 'RESPONSE: ' + response
+        logger.error 'RESPONSE: ' + response
 
 
         doc = JSON.parse(Hash.from_xml(response).to_json,:symbolize_names=>true)[:txn]
@@ -260,10 +260,10 @@ module ActiveMerchant #:nodoc:
         body_text = xmlize({:txn => body})
 
         # for logging
-        logger.debug 'REQUEST: ' + body_text
+        logger.error 'REQUEST: ' + body_text
 
         response = RestClient.post(url, body_text) {|response, request, result| response }
-        logger.debug 'RESPONSE: ' + response
+        logger.error 'RESPONSE: ' + response
 
         doc = JSON.parse(Hash.from_xml(response).to_json,:symbolize_names=>true)[:txn]
 
@@ -300,9 +300,9 @@ module ActiveMerchant #:nodoc:
 
         body_text = xmlize({:txn => body})
 
-        logger.debug 'REQUEST: ' + body_text
+        logger.error 'REQUEST: ' + body_text
         response = RestClient.post(url, body_text) {|response, request, result| response }
-        logger.debug 'RESPONSE: ' + response
+        logger.error 'RESPONSE: ' + response
 
         doc = JSON.parse(Hash.from_xml(response).to_json,:symbolize_names=>true)[:txn]
 

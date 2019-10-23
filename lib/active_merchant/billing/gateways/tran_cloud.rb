@@ -108,6 +108,8 @@ module ActiveMerchant #:nodoc:
           elsif pair.size > 1
             pair = pair.first.split(' ')
             card_holder_name = { :name_first => pair.first.strip, :name_last => pair.last.strip }
+          elsif pair.size == 1
+            card_holder_name = { :name_first => '', :name_last => pair.last.strip }
           end  
         end
           values[:authorization] = values[:RecordNo]

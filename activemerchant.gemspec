@@ -4,9 +4,9 @@ version: !ruby/object:Gem::Version
   hash: 5
   segments: 
   - 1
-  - 4
-  - 1
-  version: 1.4.9
+  - 5
+  - 0
+  version: 1.5.0
 platform: ruby
 authors: 
 - Tobias Luetke

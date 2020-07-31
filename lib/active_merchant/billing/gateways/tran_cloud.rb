@@ -91,16 +91,17 @@ module ActiveMerchant #:nodoc:
           :url => url, 
           :headers => headers, 
           :payload => transRequest.to_json, 
-          :timeout => 120) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
+          :timeout => 360) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
 
         #values = response[:RStream].reject { |k,v| (k.to_s =~ /Line/) === 0 }
         values = response[:RStream]
         logger.error 'RESPONSE: ' + JSON.pretty_generate(response)
         return request_failed_response(values) if request_failed?(values)
         
-        card_holder_name = {:name_first => '', :name_last => ''}
+        card_holder_name = {:name_first => '', :name_last => 'Unknown'}
 
         if values[:CardholderName].present?
+          card_holder_name[:name_last] = values[:CardholderName]
           pair = values[:CardholderName].split('/').collect{|s| s.strip }.reject{|s| s.empty? }
           
           if pair.size == 2
@@ -126,8 +127,8 @@ module ActiveMerchant #:nodoc:
           :card_type => values[:CardType],
           :card_entry_method => values[:EntryMethod],
           :card_issuer => values[:ApplicationLabel],
-          :card_holder_name_first => card_holder_name[:name_first] || '',
-          :card_holder_name_last => card_holder_name[:name_last] || '',
+          :card_holder_name_first => card_holder_name[:name_first],
+          :card_holder_name_last => card_holder_name[:name_last],
           :request => transRequest.to_json,
           :response => response.to_json
           )
@@ -183,7 +184,7 @@ module ActiveMerchant #:nodoc:
           :url => url, 
           :headers => headers, 
           :payload => transRequest.to_json, 
-          :timeout => 120) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
+          :timeout => 360) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
 
         values = response[:RStream].reject { |k,v| k.to_s[0..3] == 'Line' }
         logger.error 'RESPONSE: ' + JSON.pretty_generate(response)
@@ -262,7 +263,7 @@ module ActiveMerchant #:nodoc:
           :url => url, 
           :headers => headers, 
           :payload => transRequest.to_json, 
-          :timeout => 120) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
+          :timeout => 360) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
         
         values = response[:RStream].reject { |k,v| k.to_s[0..3] == 'Line' }
         logger.error 'RESPONSE: ' + JSON.pretty_generate(response)
@@ -294,7 +295,7 @@ module ActiveMerchant #:nodoc:
           :url => url, 
           :headers => headers, 
           :payload => transRequest.to_json, 
-          :timeout => 120) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
+          :timeout => 360) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
         logger.error 'RESPONSE: ' + response.to_json
         
         values = response[:RStream].reject { |k,v| (k.to_s =~ /Line/) === 0 }
@@ -315,7 +316,7 @@ module ActiveMerchant #:nodoc:
           :url => url, 
           :headers => headers, 
           :payload => transRequest.to_json, 
-          :timeout => 120) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
+          :timeout => 360) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
         logger.error 'RESPONSE: ' + response.to_json
 
         values = response[:RStream].reject { |k,v| (k.to_s =~ /Line/) === 0 }
@@ -358,7 +359,7 @@ module ActiveMerchant #:nodoc:
           :url => url, 
           :headers => headers, 
           :payload => transRequest.to_json, 
-          :timeout => 120) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
+          :timeout => 360) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
         logger.error 'RESPONSE: ' + response.to_json
         
         values = response[:RStream].reject { |k,v| (k.to_s =~ /Line/) === 0 }
@@ -380,7 +381,7 @@ module ActiveMerchant #:nodoc:
           :url => url, 
           :headers => headers, 
           :payload => transRequest.to_json, 
-          :timeout => 120) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
+          :timeout => 360) {|response, request, result| JSON.parse(response, :symbolize_names => true) }
         logger.error 'RESPONSE: ' + response.to_json
         
         values = response[:RStream].reject { |k,v| (k.to_s =~ /Line/) === 0 }

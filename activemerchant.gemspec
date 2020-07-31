@@ -1,7 +1,7 @@
 --- !ruby/object:Gem::Specification 
 name: activemerchant
 version: !ruby/object:Gem::Version 
-  hash: 5
+  hash: 6
   segments: 
   - 1
   - 5

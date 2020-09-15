@@ -100,12 +100,12 @@ module ActiveMerchant #:nodoc:
         body[:ssl_amount] = '%.2f' % (money / 100.0)
 
         body[:ssl_card_number] = creditcard.card_number
-        body[:ssl_exp_date] = ('%02d' % creditcard.month.to_i)+('%02d' % (creditcard.year.to_i % 1000))
+        body[:ssl_exp_date] = ('%02d' % creditcard.expiration_month.to_i)+('%02d' % (creditcard.expiration_year.to_i % 1000))
         body[:ssl_first_name] = creditcard.first_name[0..19] if creditcard.first_name.present?
         body[:ssl_last_name] = creditcard.last_name[0..19] if creditcard.last_name.present?
 
-        if creditcard.verification_value.present?
-          body[:ssl_cvv2cvc2] = creditcard.verification_value
+        if creditcard.cid.present?
+          body[:ssl_cvv2cvc2] = creditcard.cid
           body[:ssl_cvv2cvc2_indicator] = 1
         end
 
@@ -166,12 +166,12 @@ module ActiveMerchant #:nodoc:
         body[:ssl_amount] = '%.2f' % (money / 100.0)
 
         body[:ssl_card_number] = creditcard.card_number
-        body[:ssl_exp_date] = ('%02d' % creditcard.month.to_i)+('%02d' % (creditcard.year.to_i % 1000))
+        body[:ssl_exp_date] = ('%02d' % creditcard.expiration_month.to_i)+('%02d' % (creditcard.expiration_year.to_i % 1000))
         body[:ssl_first_name] = creditcard.first_name[0..19] if creditcard.first_name.present?
         body[:ssl_last_name] = creditcard.last_name[0..19] if creditcard.last_name.present?
 
-        if creditcard.verification_value.present?
-          body[:ssl_cvv2cvc2] = creditcard.verification_value
+        if creditcard.cid.present?
+          body[:ssl_cvv2cvc2] = creditcard.cid
           body[:ssl_cvv2cvc2_indicator] = 1
         end
 

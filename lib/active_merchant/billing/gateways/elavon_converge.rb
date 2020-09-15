@@ -100,7 +100,7 @@ module ActiveMerchant #:nodoc:
         body[:ssl_amount] = '%.2f' % (money / 100.0)
 
         if options[:ssl_token].present?
-          body[:ssl_token] = options
+          body[:ssl_token] = options[:ssl_token]
         else
           body[:ssl_card_number] = creditcard.card_number
           body[:ssl_exp_date] = ('%02d' % creditcard.expiration_month.to_i)+('%02d' % (creditcard.expiration_year.to_i % 1000))
@@ -168,8 +168,8 @@ module ActiveMerchant #:nodoc:
         body[:ssl_transaction_type] = :ccsale
         body[:ssl_amount] = '%.2f' % (money / 100.0)
 
-        if options[:cc_token].present?
-          body[:ssl_token] = options[:cc_token]
+        if options[:ssl_token].present?
+          body[:ssl_token] = options[:ssl_token]
         else
           body[:ssl_card_number] = creditcard.card_number
           body[:ssl_exp_date] = ('%02d' % creditcard.expiration_month.to_i)+('%02d' % (creditcard.expiration_year.to_i % 1000))

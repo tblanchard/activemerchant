@@ -99,26 +99,29 @@ module ActiveMerchant #:nodoc:
         body[:ssl_transaction_type] = :ccauthonly
         body[:ssl_amount] = '%.2f' % (money / 100.0)
 
-        body[:ssl_card_number] = creditcard.card_number
-        body[:ssl_exp_date] = ('%02d' % creditcard.expiration_month.to_i)+('%02d' % (creditcard.expiration_year.to_i % 1000))
-        body[:ssl_first_name] = creditcard.first_name[0..19] if creditcard.first_name.present?
-        body[:ssl_last_name] = creditcard.last_name[0..19] if creditcard.last_name.present?
+        if options[:ssl_token].present?
+          body[:ssl_token] = options
+        else
+          body[:ssl_card_number] = creditcard.card_number
+          body[:ssl_exp_date] = ('%02d' % creditcard.expiration_month.to_i)+('%02d' % (creditcard.expiration_year.to_i % 1000))
+          body[:ssl_first_name] = creditcard.first_name[0..19] if creditcard.first_name.present?
+          body[:ssl_last_name] = creditcard.last_name[0..19] if creditcard.last_name.present?
 
-        if creditcard.cid.present?
-          body[:ssl_cvv2cvc2] = creditcard.cid
-          body[:ssl_cvv2cvc2_indicator] = 1
+          if creditcard.cid.present?
+            body[:ssl_cvv2cvc2] = creditcard.cid
+            body[:ssl_cvv2cvc2_indicator] = 1
+          end
+
+          billing_address = options[:billing_address]
+
+          if billing_address.present?
+            body[:ssl_avs_zip] = billing_address[:zip]
+            body[:ssl_avs_address] = billing_address[:address1]
+            body[:ssl_city] = billing_address[:city]
+            body[:ssl_state] = billing_address[:state]
+            body[:ssl_country] = billing_address[:country]
+          end
         end
-
-        billing_address = options[:billing_address]
-
-        if billing_address.present?
-          body[:ssl_avs_zip] = billing_address[:zip]
-          body[:ssl_avs_address] = billing_address[:address1]
-          body[:ssl_city] = billing_address[:city]
-          body[:ssl_state] = billing_address[:state]
-          body[:ssl_country] = billing_address[:country]
-        end
-
         body_text = xmlize({:txn => body})
 
         # for logging
@@ -165,24 +168,28 @@ module ActiveMerchant #:nodoc:
         body[:ssl_transaction_type] = :ccsale
         body[:ssl_amount] = '%.2f' % (money / 100.0)
 
-        body[:ssl_card_number] = creditcard.card_number
-        body[:ssl_exp_date] = ('%02d' % creditcard.expiration_month.to_i)+('%02d' % (creditcard.expiration_year.to_i % 1000))
-        body[:ssl_first_name] = creditcard.first_name[0..19] if creditcard.first_name.present?
-        body[:ssl_last_name] = creditcard.last_name[0..19] if creditcard.last_name.present?
+        if options[:cc_token].present?
+          body[:ssl_token] = options[:cc_token]
+        else
+          body[:ssl_card_number] = creditcard.card_number
+          body[:ssl_exp_date] = ('%02d' % creditcard.expiration_month.to_i)+('%02d' % (creditcard.expiration_year.to_i % 1000))
+          body[:ssl_first_name] = creditcard.first_name[0..19] if creditcard.first_name.present?
+          body[:ssl_last_name] = creditcard.last_name[0..19] if creditcard.last_name.present?
 
-        if creditcard.cid.present?
-          body[:ssl_cvv2cvc2] = creditcard.cid
-          body[:ssl_cvv2cvc2_indicator] = 1
-        end
+          if creditcard.cid.present?
+            body[:ssl_cvv2cvc2] = creditcard.cid
+            body[:ssl_cvv2cvc2_indicator] = 1
+          end
 
-        billing_address = options[:billing_address]
+          billing_address = options[:billing_address]
 
-        if billing_address.present?
-          body[:ssl_avs_zip] = billing_address[:zip]
-          body[:ssl_avs_address] = billing_address[:address1]
-          body[:ssl_city] = billing_address[:city]
-          body[:ssl_state] = billing_address[:state]
-          body[:ssl_country] = billing_address[:country]
+          if billing_address.present?
+            body[:ssl_avs_zip] = billing_address[:zip]
+            body[:ssl_avs_address] = billing_address[:address1]
+            body[:ssl_city] = billing_address[:city]
+            body[:ssl_state] = billing_address[:state]
+            body[:ssl_country] = billing_address[:country]
+          end
         end
 
         body_text = xmlize({:txn => body})

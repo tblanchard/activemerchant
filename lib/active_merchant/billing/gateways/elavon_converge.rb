@@ -99,7 +99,7 @@ module ActiveMerchant #:nodoc:
         body[:ssl_transaction_type] = :ccauthonly
         body[:ssl_amount] = '%.2f' % (money / 100.0)
 
-        body[:ssl_card_number] = creditcard.number
+        body[:ssl_card_number] = creditcard.card_number
         body[:ssl_exp_date] = ('%02d' % creditcard.month.to_i)+('%02d' % (creditcard.year.to_i % 1000))
         body[:ssl_first_name] = creditcard.first_name[0..19] if creditcard.first_name.present?
         body[:ssl_last_name] = creditcard.last_name[0..19] if creditcard.last_name.present?
@@ -165,7 +165,7 @@ module ActiveMerchant #:nodoc:
         body[:ssl_transaction_type] = :ccsale
         body[:ssl_amount] = '%.2f' % (money / 100.0)
 
-        body[:ssl_card_number] = creditcard.number
+        body[:ssl_card_number] = creditcard.card_number
         body[:ssl_exp_date] = ('%02d' % creditcard.month.to_i)+('%02d' % (creditcard.year.to_i % 1000))
         body[:ssl_first_name] = creditcard.first_name[0..19] if creditcard.first_name.present?
         body[:ssl_last_name] = creditcard.last_name[0..19] if creditcard.last_name.present?

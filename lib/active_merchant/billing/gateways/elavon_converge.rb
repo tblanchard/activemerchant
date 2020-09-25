@@ -228,14 +228,14 @@ module ActiveMerchant #:nodoc:
         body = credentials
         body[:ssl_transaction_type] = :cccomplete
         body[:ssl_description] = 'Keyed Sale API'
-        body[:ssl_amount] = (money.to_money/100.0).to_s
+        body[:ssl_amount] = (money.to_money/100.0).to_s if money.present?
         body[:ssl_txn_id] = authorization
 
         names = %w( ssl_merchant_id ssl_user_id ssl_pin ssl_description ssl_transaction_type ssl_txn_id )
 
         body_text = 'xmldata=<txn>' + xmlize2(body,names) + '</txn>'
 
-        # for logging 
+        # for logging
         logger.error 'REQUEST: ' + body_text
 
         response = RestClient.post(url, body_text) {|response, request, result| response }

@@ -231,7 +231,12 @@ module ActiveMerchant #:nodoc:
         body[:ssl_amount] = (money.to_money/100.0).to_s if money.present?
         body[:ssl_txn_id] = authorization
 
-        names = %w( ssl_merchant_id ssl_user_id ssl_pin ssl_description ssl_transaction_type ssl_txn_id )
+        names = [ :ssl_merchant_id,
+                  :ssl_user_id,
+                  :ssl_pin,
+                  :ssl_description,
+                  :ssl_transaction_type,
+                  :ssl_txn_id ]
 
         body_text = 'xmldata=<txn>' + xmlize2(body,names) + '</txn>'
 
@@ -344,7 +349,7 @@ module ActiveMerchant #:nodoc:
           xml = ''
           fields.each do |name|
             val = args[name]
-            xml += "<#{name}>#{xmlize(val)}</#{name}>"
+            xml += "<#{name}>#{xmlize(val)}</#{name}>" if val.present?
           end
           return xml
         end

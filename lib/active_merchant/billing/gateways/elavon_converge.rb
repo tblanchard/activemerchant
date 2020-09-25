@@ -235,7 +235,7 @@ module ActiveMerchant #:nodoc:
 
         body_text = 'xmldata=<txn>' + xmlize2(body,names) + '</txn>'
 
-        # for logging
+        # for logging 
         logger.error 'REQUEST: ' + body_text
 
         response = RestClient.post(url, body_text) {|response, request, result| response }

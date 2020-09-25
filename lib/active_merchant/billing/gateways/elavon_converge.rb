@@ -227,11 +227,13 @@ module ActiveMerchant #:nodoc:
 
         body = credentials
         body[:ssl_transaction_type] = :cccomplete
-
+        body[:ssl_description] = 'Keyed Sale API'
         body[:ssl_amount] = (money.to_money/100.0).to_s
         body[:ssl_txn_id] = authorization
 
-        body_text = xmlize({:txn => body})
+        names = %w( ssl_merchant_id ssl_user_id ssl_pin ssl_description ssl_transaction_type ssl_txn_id )
+
+        body_text = 'xmldata=<txn>' + xmlize(body) + '</txn>'
 
         # for logging
         logger.error 'REQUEST: ' + body_text
@@ -332,6 +334,18 @@ module ActiveMerchant #:nodoc:
         if args.is_a?(Hash)
           xml = ''
           args.each_pair { |name, val|  xml += "<#{name}>#{xmlize(val)}</#{name}>" }
+          return xml
+        end
+        args.to_s
+      end
+
+      def xmlize2(args,fields)
+        if args.is_a?(Hash)
+          xml = ''
+          fields.each do |name|
+            val = args[name]
+            xml += "<#{name}>#{xmlize(val)}</#{name}>"
+          end
           return xml
         end
         args.to_s

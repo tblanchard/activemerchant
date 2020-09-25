@@ -233,7 +233,7 @@ module ActiveMerchant #:nodoc:
 
         names = %w( ssl_merchant_id ssl_user_id ssl_pin ssl_description ssl_transaction_type ssl_txn_id )
 
-        body_text = 'xmldata=<txn>' + xmlize(body) + '</txn>'
+        body_text = 'xmldata=<txn>' + xmlize2(body,names) + '</txn>'
 
         # for logging
         logger.error 'REQUEST: ' + body_text

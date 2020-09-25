@@ -40,7 +40,8 @@ module ActiveMerchant #:nodoc:
       end
 
       def url
-        @options[:test] ? TEST_URL : LIVE_URL
+        'https://api.convergepay.com/VirtualMerchant/processxml.do'
+          #@options[:test] ? TEST_URL : LIVE_URL
       end
 
       def credentials

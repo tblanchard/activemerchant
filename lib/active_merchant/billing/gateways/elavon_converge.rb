@@ -60,6 +60,26 @@ module ActiveMerchant #:nodoc:
           @options)    
       end
 
+      def delete(txn_id,options={})
+        body = credentials
+        body[:ssl_transaction_type] = :ccdelete
+        body_text = 'xmldata=' + xmlize({:txn => body})
+        response = RestClient.post(url, body_text) {|response, request, result| response }
+
+        logger.error 'RESPONSE: ' + response
+
+        doc = JSON.parse(Hash.from_xml(response).to_json,:symbolize_names=>true)[:txn]
+
+        return request_failed_response(doc) if request_failed?(doc)
+
+        ActiveMerchant::Billing::Response.new(
+            doc[:ssl_result] == '0',
+            doc[:ssl_result_message], {},
+            :authorization => doc[:ssl_txn_id],
+            :request => xmlize(body),
+            :response => doc.to_json)
+      end
+
       # Performs an authorization, which reserves the funds on the customer's credit card, but does not
       # charge the card.
       #

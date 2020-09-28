@@ -63,6 +63,7 @@ module ActiveMerchant #:nodoc:
       def delete(txn_id,options={})
         body = credentials
         body[:ssl_transaction_type] = :ccdelete
+        body[:ssl_txn_id] = txn_id
         body_text = 'xmldata=' + xmlize({:txn => body})
         response = RestClient.post(url, body_text) {|response, request, result| response }
 

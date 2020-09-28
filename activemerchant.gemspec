@@ -6,7 +6,7 @@ version: !ruby/object:Gem::Version
   - 1
   - 5
   - 0
-  version: 1.6.3
+  version: 1.6.4
 platform: ruby
 authors: 
 - Tobias Luetke

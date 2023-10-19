@@ -27,20 +27,20 @@ module ActiveMerchant #:nodoc:
       require 'rest-client'
       require 'nokogiri'
 
-      TEST_URL = 'https://demo.convergepay.com/VirtualMerchantDemo/processxml.do'
+      TEST_URL = 'https://api.demo.convergepay.com/VirtualMerchantDemo/processxml.do'
       LIVE_URL = 'https://api.convergepay.com/VirtualMerchant/processxml.do'
 
 
-      # Creates a new PayTraceGateway
+      # Creates a new Converge Gateway
       #
       def initialize(options = {})
         requires!(options, :test, :ssl_merchant_id, :ssl_user_id, :ssl_pin)
-        @options = options
+        @options = options.dup
+        @options[:test] ||= (Rails.env != "production")
         super
       end
 
       def url
-        #'https://api.convergepay.com/VirtualMerchant/processxml.do'
         @options[:test] ? TEST_URL : LIVE_URL
       end
 
@@ -57,7 +57,7 @@ module ActiveMerchant #:nodoc:
           false,
           doc[:errorMessage],
           {},
-          @options)    
+          @options)
       end
 
       def delete(txn_id,options={})
@@ -74,11 +74,11 @@ module ActiveMerchant #:nodoc:
         return request_failed_response(doc) if request_failed?(doc)
 
         ActiveMerchant::Billing::Response.new(
-            doc[:ssl_result] == '0',
-            doc[:ssl_result_message], {},
-            :authorization => doc[:ssl_txn_id],
-            :request => xmlize(body),
-            :response => doc.to_json)
+          doc[:ssl_result] == '0',
+          doc[:ssl_result_message], {},
+          :authorization => doc[:ssl_txn_id],
+          :request => xmlize(body),
+          :response => doc.to_json)
       end
 
       # Performs an authorization, which reserves the funds on the customer's credit card, but does not
@@ -116,7 +116,7 @@ module ActiveMerchant #:nodoc:
       # * *:custom_dba* -- optional value that is sent to the cardholder’s issuer and overrides the business name stored in PayTrace. Custom DBA values are only used with requests to process sales or authorizations through accounts on the TSYS/Vital, Heartland, and Trident networks (customer ID token sale)
       # * *:enable_partial_authentication* -- flag that must be set to ‘Y’ in order to support partial autho
       def authorize(money, creditcard, options = {})
-        
+
         body = credentials
         body[:ssl_transaction_type] = :ccauthonly
         body[:ssl_amount] = money.to_money.to_s
@@ -147,11 +147,11 @@ module ActiveMerchant #:nodoc:
         body_text = xmlize({:txn => body})
 
         # for logging
-        safe_request = xmlize({:txn => sanitize_body(body)})
-
+        safe_request = xmlize({:txn => sanitize_body(body_text)})
+        request_body = "xmldata=" + body_text
         logger.error 'REQUEST: ' + safe_request
 
-        response = RestClient.post(url, xmlize({:txn => body})) {|response, request, result| response }
+        response = RestClient.post(url, request_body) {|response, request, result| response }
 
         logger.error 'RESPONSE: ' + response
 
@@ -174,6 +174,7 @@ module ActiveMerchant #:nodoc:
         body = body.dup
         body[:ssl_card_number] = body[:ssl_card_number].gsub(/.(?=.{4})/,'X') if body[:ssl_card_number].present?
         body.delete(:ssl_cvv2cvc2)
+        body[:ssl_pin] = body[:ssl_pin].gsub(/.(?=.{4})/,'.') if body[:ssl_pin].present?
         body
       end
 
@@ -220,10 +221,10 @@ module ActiveMerchant #:nodoc:
         safe_request = xmlize({:txn => sanitize_body(body)})
         logger.error 'REQUEST: ' + safe_request
 
-        request_body = "xmldata={body_text}"
+        request_body = "xmldata=" + body_text
 
         response = RestClient.post(url, request_body) {|response, request, result| response }
-        
+
         logger.error 'RESPONSE: ' + response
         doc = JSON.parse(Hash.from_xml(response).to_json,:symbolize_names=>true)[:txn]
 
@@ -238,7 +239,7 @@ module ActiveMerchant #:nodoc:
           :cvv_result => doc[:ssl_cvv2_response],
           :request => safe_request,
           :response => doc.to_json
-          )
+        )
       end
 
       # Captures the funds from an authorized transaction.
@@ -294,7 +295,7 @@ module ActiveMerchant #:nodoc:
 
         body[:ssl_txn_id] = authorization
 
-        body_text = xmlize({:txn => body})
+        body_text = "xmldata=" + xmlize({:txn => body})
 
         # for logging
         logger.error 'REQUEST: ' + body_text
@@ -335,7 +336,7 @@ module ActiveMerchant #:nodoc:
         body[:ssl_amount] = money.to_money.to_s
         body[:ssl_txn_id] = identification
 
-        body_text = xmlize({:txn => body})
+        body_text = "xmldata=" + xmlize({:txn => body})
 
         logger.error 'REQUEST: ' + body_text
         response = RestClient.post(url, body_text) {|response, request, result| response }

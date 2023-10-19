@@ -4,9 +4,9 @@ version: !ruby/object:Gem::Version
   hash: 6
   segments: 
   - 1
+  - 6
   - 5
-  - 0
-  version: 1.6.4
+  version: 1.6.5
 platform: ruby
 authors: 
 - Tobias Luetke

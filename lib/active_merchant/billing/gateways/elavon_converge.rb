@@ -119,7 +119,7 @@ module ActiveMerchant #:nodoc:
         
         body = credentials
         body[:ssl_transaction_type] = :ccauthonly
-        body[:ssl_amount] = '%.2f' % (money / 100.0)
+        body[:ssl_amount] = money.to_money.to_s
 
         if options[:ssl_token].present?
           body[:ssl_token] = options[:ssl_token]
@@ -188,7 +188,7 @@ module ActiveMerchant #:nodoc:
 
         body = credentials
         body[:ssl_transaction_type] = :ccsale
-        body[:ssl_amount] = '%.2f' % (money / 100.0)
+        body[:ssl_amount] = money.to_money.to_s
 
         if options[:ssl_token].present?
           body[:ssl_token] = options[:ssl_token]
@@ -250,7 +250,7 @@ module ActiveMerchant #:nodoc:
         body = credentials
         body[:ssl_transaction_type] = :cccomplete
         body[:ssl_description] = 'Keyed Sale API'
-        body[:ssl_amount] = (money.to_money/100.0).to_s if money.present?
+        body[:ssl_amount] = money.to_money.to_s if money.present?
         body[:ssl_txn_id] = authorization
 
         names = [ :ssl_merchant_id,
@@ -330,7 +330,7 @@ module ActiveMerchant #:nodoc:
         body = credentials
         body[:ssl_transaction_type] = :ccreturn
 
-        body[:ssl_amount] = (money.to_money/100.0).to_s
+        body[:ssl_amount] = money.to_money.to_s
         body[:ssl_txn_id] = identification
 
         body_text = xmlize({:txn => body})

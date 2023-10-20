@@ -121,10 +121,6 @@ module ActiveMerchant #:nodoc:
         body[:ssl_transaction_type] = :ccauthonly
         body[:ssl_amount] = money.to_money.to_s
 
-        options.each do |k, v|
-          body[k] = v if k.
-        end
-
         if options[:ssl_token].present?
           body[:ssl_token] = options[:ssl_token]
         else
@@ -194,7 +190,6 @@ module ActiveMerchant #:nodoc:
         body = credentials
         body[:ssl_transaction_type] = :ccsale
         body[:ssl_amount] = money.to_money.to_s
-
 
         if options[:ssl_token].present?
           body[:ssl_token] = options[:ssl_token]

@@ -121,6 +121,10 @@ module ActiveMerchant #:nodoc:
         body[:ssl_transaction_type] = :ccauthonly
         body[:ssl_amount] = money.to_money.to_s
 
+        options.each do |k, v|
+          body[k] = v if k.
+        end
+
         if options[:ssl_token].present?
           body[:ssl_token] = options[:ssl_token]
         else
@@ -191,9 +195,12 @@ module ActiveMerchant #:nodoc:
         body[:ssl_transaction_type] = :ccsale
         body[:ssl_amount] = money.to_money.to_s
 
+
         if options[:ssl_token].present?
           body[:ssl_token] = options[:ssl_token]
         else
+          body[:ssl_get_token] = options[:ssl_get_token] if options[:ssl_get_token].present?
+          body[:ssl_add_token] = options[:ssl_add_token] if options[:ssl_add_token].present?
           body[:ssl_card_number] = creditcard.card_number
           body[:ssl_exp_date] = ('%02d' % creditcard.expiration_month.to_i)+('%02d' % (creditcard.expiration_year.to_i % 1000))
           body[:ssl_first_name] = creditcard.first_name[0..19] if creditcard.first_name.present?
